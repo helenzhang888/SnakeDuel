@@ -5,6 +5,7 @@
 package snakeduel;
 
 import environment.Environment;
+import environment.GraphicsPalette;
 import environment.Grid;
 import image.ResourceTools;
 import java.awt.Color;
@@ -13,6 +14,7 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 /**
  *
@@ -22,6 +24,8 @@ class SnakeEnvironment extends Environment {
     private Grid grid;
     private int score = 0;
     private Snake snake;
+    private ArrayList<Point> apples;
+    private ArrayList<Point> poisonBottles;
     
     private int delay = 4;
     private int moveCounter = delay;
@@ -39,8 +43,18 @@ class SnakeEnvironment extends Environment {
         this.grid.setColor(new Color(150,150,250));
         this.grid.setCellHeight(22);
         this.grid.setCellWidth(22);
-        this.grid.setColumns(36);
-        this.grid.setRows(19);
+        this.grid.setColumns(57);
+        this.grid.setRows(26);
+        
+        this.apples = new ArrayList<Point>();
+        this.apples.add(new Point(10, 10));
+        this.apples.add(new Point(12, 13));
+        this.apples.add(new Point(20, 23));
+        this.apples.add(new Point(40, 5));
+        
+        this.poisonBottles = new ArrayList<Point>();
+        this.poisonBottles.add(new Point(8, 7));
+        this.poisonBottles.add(new Point(10, 11));
         
         this.snake = new Snake();
         this.snake.getBody().add(new Point(5,5));
@@ -49,17 +63,53 @@ class SnakeEnvironment extends Environment {
         this.snake.getBody().add(new Point(4,3));
     }
 
+    private void checkAppleHeadIntersect() {
+        for (int i = 0; i < this.apples.size(); i++) {
+            if (this.snake.getHead().equals( this.apples.get(i))) {
+//                System.out.println("HITTTTTTTTTTTTTTTTTTTTTTTTT");
+                //snake grow
+                snake.setGrowthCounter(1);
+                //add points
+                this.score += 10;
+                //set new apples
+                this.apples.remove(i);
+                this.apples.add(new Point (((int)(Math.random() * this.grid.getColumns())),((int)(Math.random() * this.grid.getRows()))));
+                //speed up
+                if (this.score >= 500) {
+                        this.delay = 1;
+                }else if (this.score >= 300) {
+                    this.delay = 2;  
+                }else if(this.score >= 100) {
+                    this.delay = 3;                  
+                }
+            }
+        }
+    }
+    
+    private void checkBottlesHeadIntersect() {
+        for (int i = 0; i < this.poisonBottles.size(); i++) {
+            if (this.snake.getHead().equals(this.poisonBottles.get(i))) {
+                this.score -= 10;
+                this.poisonBottles.remove(i);
+                this.poisonBottles.add(new Point (((int)(Math.random() * this.grid.getColumns())),((int)(Math.random() * this.grid.getRows()))));
+                
+            }
+        }
+    }
+
     @Override
     public void timerTaskHandler() {
         if (snake != null){
             if (moveCounter <= 0){
                 snake.move(); 
                 moveCounter = delay;
+                checkAppleHeadIntersect();
+                checkBottlesHeadIntersect();
             } else{
                moveCounter --;
             }
         }
-        
+                
         if (snake.getHead().x< 0){
             snake.getHead().x = grid.getColumns() - 1;
         }else if (snake.getHead().y< 0){
@@ -115,6 +165,19 @@ class SnakeEnvironment extends Environment {
         if(this.grid != null){
            this.grid.paintComponent(graphics);
            
+           if (this.apples != null){
+               for (int i = 0; i < this.apples.size(); i++) {
+//                   System.out.printf("apple at position %d has location x = %d y= %d\n", i,  this.apples.get(i).x, this.apples.get(i).y );
+                   GraphicsPalette.drawApple(graphics, this.grid.getCellPosition(this.apples.get(i)), this.grid.getCellSize());
+               }
+           }
+           
+           if (this.poisonBottles != null){
+               for (int i = 0; i < this.poisonBottles.size(); i++) {
+                   GraphicsPalette.drawPoisonBottle(graphics, this.grid.getCellPosition(this.poisonBottles.get(i)), this.grid.getCellSize(),Color.green);
+               }
+           }
+           
            Point cellLocation;
            
            if(snake != null){
@@ -154,8 +217,7 @@ class SnakeEnvironment extends Environment {
         graphics.setFont(new Font("Calibri", Font.ITALIC,20));
         graphics.drawString("Using arrow keys or w, a, s, d to control the direction" ,400,70);
         
-        
-        
     }
+
     
 }
