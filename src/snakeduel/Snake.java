@@ -60,7 +60,15 @@ public class Snake {
         }
     } 
     
-    
+    public boolean selfHitTest(){
+        for (int i = 1; i < body.size(); i++) {
+            if (body.get(i).equals(getHead())) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
     
     public Point getHead(){
         return body.get(0);

@@ -31,12 +31,15 @@ class SnakeEnvironment extends Environment {
     private ArrayList<Point> apples;
     private ArrayList<Point> poisonBottles;
     private Point letters;
+    private Point enterPortal;
+    private Point leavePortal;
+    
 
     //counter for snake
     private int delay = 4;
     private int moveCounter = delay;
 
-    //counter for special object
+    //counter for diamond
     private int disappear = 1000;
     private int appear = 150;
     private int objectCounterDisappear = disappear;
@@ -55,6 +58,10 @@ class SnakeEnvironment extends Environment {
     //instructions
     private int instructionCounter = 100;
     private String instruction = "Using arrow keys or w, a, s, d to control the direction. ";
+    
+    //portal counter
+    private int portalCounter = 300;
+
 
     private Image letter;
     
@@ -63,6 +70,13 @@ class SnakeEnvironment extends Environment {
     
     private Image heart;
 
+    
+    //accomplishment
+    private String accomplishmentOne = "";
+    //    private int portalAccomplishmentCounter = 0;
+    private int appleAccomplishmentCounter = 0;
+    
+    
     public SnakeEnvironment() {
 
     }
@@ -89,7 +103,7 @@ class SnakeEnvironment extends Environment {
         this.grid.setCellHeight(22);
         this.grid.setCellWidth(22);
         this.grid.setColumns(57);
-        this.grid.setRows(26);
+        this.grid.setRows(25);
 
         this.apples = new ArrayList<Point>();
         this.poisonBottles = new ArrayList<Point>();
@@ -105,11 +119,14 @@ class SnakeEnvironment extends Environment {
 
         this.letters = new Point(-1000, -1000);
 
+        this.enterPortal = new Point(getRandomGridLocation());
+        this.leavePortal = new Point(getRandomGridLocation());
+        
         this.snake = new Snake();
         this.snake.getBody().add(new Point(5, 5));
         this.snake.getBody().add(new Point(5, 4));
         this.snake.getBody().add(new Point(5, 3));
-        this.snake.getBody().add(new Point(4, 3));
+        this.snake.getBody().add(new Point(4, 3)); 
     }
 
     private Point getRandomGridLocation() {
@@ -118,7 +135,7 @@ class SnakeEnvironment extends Environment {
         Point myPoint = new Point();
         do {
                myPoint.setLocation(new Point((int) (Math.random() * this.grid.getColumns()), (int) (Math.random() * this.grid.getRows())));
-               collision = checkIntersect(myPoint, this.poisonBottles)  || checkIntersect(myPoint, this.apples);
+               collision = checkIntersect(myPoint, this.poisonBottles)  && checkIntersect(myPoint, this.apples);
         } while (collision);
         return myPoint;
     }
@@ -149,6 +166,8 @@ class SnakeEnvironment extends Environment {
 //                this.apples.remove(i);
 //                this.apples.add(new Point (((int)(Math.random() * this.grid.getColumns())),((int)(Math.random() * this.grid.getRows()))));
                 this.poisonBottles.add(getRandomGridLocation());
+                //accomplishment counter
+                this.appleAccomplishmentCounter ++;
             }
         }
     }
@@ -181,6 +200,19 @@ class SnakeEnvironment extends Environment {
         }
 
     }
+    private void checkPortalHeadIntersect() {
+
+        if (this.snake.getHead().equals(this.enterPortal)) {
+            AudioPlayer.play("/resources/rocket_sound.wav");
+            this.snake.getHead().x = this.leavePortal.x;
+            this.snake.getHead().y = this.leavePortal.y;
+        }else if (this.snake.getHead().equals(this.leavePortal)) {
+            AudioPlayer.play("/resources/rocket_sound.wav");
+            this.snake.getHead().x = this.enterPortal.x;
+            this.snake.getHead().y = this.enterPortal.y;
+        }
+
+    }
 
     @Override
     public void timerTaskHandler() {
@@ -193,6 +225,7 @@ class SnakeEnvironment extends Environment {
                     checkAppleHeadIntersect();
                     checkBottlesHeadIntersect();
                     checkLettersHeadIntersect();
+                    checkPortalHeadIntersect();
                 } else {
                     moveCounter--;
                 }
@@ -217,6 +250,17 @@ class SnakeEnvironment extends Environment {
                 }
             }
 
+            if (this.portalCounter == 0) {
+                this.enterPortal.x =getRandomGridLocation().x;
+                this.enterPortal.y =getRandomGridLocation().y;
+                this.leavePortal.x =getRandomGridLocation().x;
+                this.leavePortal.y =getRandomGridLocation().y;
+                this.portalCounter = 300;
+            }else{
+                portalCounter --;
+            }
+            
+            
             if (instructionCounter == 0) {
                 this.instruction = "Collect apples and avoid poison bottles.";
                 instructionCounter = 201;
@@ -267,12 +311,30 @@ class SnakeEnvironment extends Environment {
             if (gameState == GameState.STARTING) {
                 gameState = GameState.RUNNING;
             } else if (gameState == GameState.ENDED) {
-                gameState = GameState.RUNNING;
                 this.setBackground(ResourceTools.loadImageFromResource("resources/background_snow.jpg"));
                 this.score = 0;
                 this.life = 5;
                 this.delay = 4;
+//                for (int i = 0; i < this.poisonBottles.size()-2; i++) {
+//                    this.poisonBottles.get(i).x = -1000;
+//                    this.poisonBottles.get(i).y = -1000;
+//                }
+                this.poisonBottles.clear();
+                this.apples.clear();
+                this.poisonBottles.add(getRandomGridLocation());
+                this.poisonBottles.add(getRandomGridLocation());
+                this.apples.add(getRandomGridLocation());
+                this.apples.add(getRandomGridLocation());
+                this.apples.add(getRandomGridLocation());
+                this.apples.add(getRandomGridLocation());
                 //initialize the snake
+                snake.getBody().clear();
+                this.snake.getBody().add(new Point(5, 5));
+                this.snake.getBody().add(new Point(5, 4));
+                this.snake.getBody().add(new Point(5, 3));
+                this.snake.getBody().add(new Point(4, 3)); 
+                gameState = GameState.RUNNING;
+                
                 
             }
         } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
@@ -328,31 +390,58 @@ class SnakeEnvironment extends Environment {
                     GraphicsPalette.drawPoisonBottle(graphics, this.grid.getCellPosition(this.poisonBottles.get(i)), this.grid.getCellSize(), Color.green);
                 }
             }
+            
+            if (this.enterPortal != null) {
+                if (Math.random() > .3) {
+                    graphics.setColor(Color.BLACK);
+                } else {
+                    graphics.setColor(Color.RED);
+                }
+                graphics.fillOval(this.grid.getCellPosition(this.enterPortal).x, this.grid.getCellPosition(this.enterPortal).y, this.grid.getCellWidth(), this.grid.getCellHeight());
+                
+                graphics.setColor(Color.YELLOW);
+                graphics.fillOval(this.grid.getCellPosition(this.enterPortal).x + (this.grid.getCellWidth() * 1/4), this.grid.getCellPosition(this.enterPortal).y + (this.grid.getCellHeight() * 1/4), this.grid.getCellWidth()/2, this.grid.getCellHeight()/2);
+            }
+            
+            if (this.leavePortal != null) {
+                if (Math.random() > .3) {
+                    graphics.setColor(Color.BLACK);
+                } else {
+                    graphics.setColor(Color.RED);
+                }
+                graphics.fillOval(this.grid.getCellPosition(this.leavePortal).x, this.grid.getCellPosition(this.leavePortal).y, this.grid.getCellWidth(), this.grid.getCellHeight());
+                
+                graphics.setColor(Color.GREEN);
+                graphics.fillOval(this.grid.getCellPosition(this.leavePortal).x + (this.grid.getCellWidth() * 1/4), this.grid.getCellPosition(this.leavePortal).y + (this.grid.getCellHeight() * 1/4), this.grid.getCellWidth()/2, this.grid.getCellHeight()/2);
+            }
+            
+            
+            
             if (this.life == 1) {
-                graphics.drawImage(heart, 1240, 40, 60, 70, this);
+                graphics.drawImage(heart, 1255, 40, 60, 70, this);
             } else if (this.life == 2) {
+                graphics.drawImage(heart, 1255, 40, 60, 70, this);
                 graphics.drawImage(heart, 1240, 40, 60, 70, this);
-                graphics.drawImage(heart, 1225, 40, 60, 70, this);
             } else if (this.life == 3) {
+                graphics.drawImage(heart, 1255, 40, 60, 70, this);
                 graphics.drawImage(heart, 1240, 40, 60, 70, this);
                 graphics.drawImage(heart, 1225, 40, 60, 70, this);
-                graphics.drawImage(heart, 1210, 40, 60, 70, this);
             } else if (this.life == 4) {
+                graphics.drawImage(heart, 1255, 40, 60, 70, this);
                 graphics.drawImage(heart, 1240, 40, 60, 70, this);
                 graphics.drawImage(heart, 1225, 40, 60, 70, this);
                 graphics.drawImage(heart, 1210, 40, 60, 70, this);
-                graphics.drawImage(heart, 1195, 40, 60, 70, this);
             } else if (this.life == 5) {
+                graphics.drawImage(heart, 1255, 40, 60, 70, this);
                 graphics.drawImage(heart, 1240, 40, 60, 70, this);
                 graphics.drawImage(heart, 1225, 40, 60, 70, this);
                 graphics.drawImage(heart, 1210, 40, 60, 70, this);
                 graphics.drawImage(heart, 1195, 40, 60, 70, this);
-                graphics.drawImage(heart, 1180, 40, 60, 70, this);
             }
             
             graphics.setColor(Color.YELLOW);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 40));
-            graphics.drawString("life", 1210, 60);
+            graphics.setFont(new Font("Old English Text MT", Font.ITALIC, 40));
+            graphics.drawString("life", 1135, 75);
 
 
             Point cellLocation;
@@ -387,25 +476,52 @@ class SnakeEnvironment extends Environment {
             }
         }
         
+        
+        //score
         graphics.setColor(Color.YELLOW);
 //        graphics.setColor(new Color(200, 200, 250));
-        graphics.setFont(new Font("Calibri", Font.ITALIC, 60));
-        graphics.drawString("Score: " + this.getScore(), 50, 70);
+        graphics.setFont(new Font("Old English Text MT", Font.ITALIC, 60));
+        graphics.drawString("Score: " + this.getScore(), 50, 75);
 
-        graphics.setFont(new Font("Calibri", Font.ITALIC, 20));
+        //instruction
+        graphics.setFont(new Font("Segoe Print", Font.ITALIC, 20));
         graphics.drawString(this.instruction, 480, 70);
 
         
+        
+        //accomplishment
+        graphics.setColor(Color.BLACK);
+        graphics.setFont(new Font("Segoe Print", Font.ITALIC, 30));
+        if (this.appleAccomplishmentCounter == 10) {
+            this.accomplishmentOne = "Accomplishment: Beginner~ (Eat 10 apples)";
+            graphics.drawString(this.accomplishmentOne, 400, 675);
+        } else if (this.appleAccomplishmentCounter == 35) {
+            this.accomplishmentOne = "Accomplishment: On the right track! (Eat 35 apples)";
+            graphics.drawString(this.accomplishmentOne, 350, 675);
+        } else if (this.appleAccomplishmentCounter == 100) {
+            this.accomplishmentOne = "Accomplishment: You are pro now. (Eat 100 apples)";
+            graphics.drawString(this.accomplishmentOne, 400, 675);
+        } else if (this.appleAccomplishmentCounter == 500) {
+            this.accomplishmentOne = "Accomplishment: A.p.p.l.e. c.r.u.s.h (Eat 500 apples)";
+            graphics.drawString(this.accomplishmentOne, 400, 675);
+        } else if (this.appleAccomplishmentCounter == 1000) {
+            this.accomplishmentOne = "Accomplishment: Satisfied (Eat 1000 apples)";
+            graphics.drawString(this.accomplishmentOne, 400, 675);
+        }
+        
+        
+        
+        //game states
         if (gameState == GameState.STARTING) {
             graphics.setColor(new Color(200, 200, 250));
             graphics.fillRect(0, 0, 2000, 1000);
             graphics.drawImage(starting, 20,20 , this);
             
             graphics.setColor(Color.BLACK);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 200));
+            graphics.setFont(new Font("Snap ITC", Font.ITALIC, 150));
             graphics.drawString("Snake Game", 200, 300);
             
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 70));
+            graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 60));
             graphics.drawString("Click Enter to Start", 500, 500);
             
         }
@@ -416,13 +532,13 @@ class SnakeEnvironment extends Environment {
             graphics.drawImage(ended, 35,170 , this);
             
             graphics.setColor(Color.red);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 200));
-            graphics.drawString("Game Over", 250, 150);
+            graphics.setFont(new Font("Snap ITC", Font.ITALIC, 150));
+            graphics.drawString("Game Over", 240, 150);
             
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 70));
+            graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 70));
             graphics.drawString("Final Score: " + this.getScore(),  470, 350);
             
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 70));
+            graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 70));
             graphics.drawString("Click Enter to Restart ", 400, 450);
             
         }
@@ -432,12 +548,12 @@ class SnakeEnvironment extends Environment {
             graphics.fillRect(0, 0, 2000, 1000);
             
             graphics.setColor(Color.BLACK);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 200));
-            graphics.drawString("Paused", 400, 300);
+            graphics.setFont(new Font("Snap ITC", Font.ITALIC, 180));
+            graphics.drawString("Paused", 330, 300);
             
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 70));
+            graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 70));
             graphics.drawString("Current Score: " + this.getScore(), 450, 500);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 50));
+            graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 50));
             graphics.drawString("Click space bar to continue" , 400, 600);
             
         }
@@ -500,9 +616,11 @@ class SnakeEnvironment extends Environment {
      */
     public void setLife(int life) {
         if ((this.life > 0) && (life <= 0)) {
-//            System.out.println("death");
+//            System.out.println("death"); 
+            AudioPlayer.play("/resources/game_over.wav");
             gameState = GameState.ENDED;
         }
+        
         this.life = life;
     }
 
