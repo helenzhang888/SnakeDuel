@@ -11,5 +11,5 @@ package snakeduel;
  * @author zhanglianghui
  */
 public enum GameState {
-    RUNNING, PAUSED, ENDED, STARTING, LEVELUP;
+    RUNNING, PAUSED, ENDED, STARTING, LEVELUP, ACCOMPLISHMENT;
 }

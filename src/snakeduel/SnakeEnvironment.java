@@ -56,7 +56,8 @@ class SnakeEnvironment extends Environment {
     private int life = 5;
 
     //instructions
-    private int instructionCounter = 100;
+//    private int instructionCounter = 100;
+    private int instructionCounter = 700;
     private String instruction = "Using arrow keys or w, a, s, d to control the direction. ";
     
     //portal counter
@@ -72,10 +73,17 @@ class SnakeEnvironment extends Environment {
 
     
     //accomplishment
-    private String accomplishmentOne = "";
+//    private String accomplishmentOne = "";
     //    private int portalAccomplishmentCounter = 0;
-    private int appleAccomplishmentCounter = 0;
+//    private int appleAccomplishmentCounter = 0;
     
+    //Achievement
+    private Achievement portalAchievement;
+    private Achievement diamondAchievement;
+    private Achievement appleAchievement;
+    private Achievement directionAchievement;
+    private Achievement timeAchievement;
+    //direction,playtime,poison bottles in a row
     
     public SnakeEnvironment() {
 
@@ -96,6 +104,39 @@ class SnakeEnvironment extends Environment {
         
         AudioPlayer.play("/resources/luv_letter.wav", AudioPlayer.LOOP_INFINITE);
         
+        
+        ArrayList<AchievementBoundary> appleAchievementBoundary = new ArrayList<>();
+        appleAchievementBoundary.add(new AchievementBoundary(5, "Beginner"));
+        appleAchievementBoundary.add(new AchievementBoundary(10, "Newbie"));
+        appleAchievementBoundary.add(new AchievementBoundary(25, "Professional"));
+        appleAchievementBoundary.add(new AchievementBoundary(50, "Master"));
+        appleAchievementBoundary.add(new AchievementBoundary(100, "Obsessive gamer"));
+        appleAchievementBoundary.add(new AchievementBoundary(250, "No social life"));
+        appleAchievementBoundary.add(new AchievementBoundary(500, "You should stop playing"));
+        appleAchievementBoundary.add(new AchievementBoundary(1000, "Seriously, go work out"));
+        this.appleAchievement = new Achievement("apples eaten", 0, appleAchievementBoundary);
+        
+        ArrayList<AchievementBoundary> portalAchievementBoundary = new ArrayList<>();
+        portalAchievementBoundary.add(new AchievementBoundary(5, "Portal user"));
+        portalAchievementBoundary.add(new AchievementBoundary(10, "Yeah! Convenient portals!"));
+        portalAchievementBoundary.add(new AchievementBoundary(25, "Freely teleport"));
+        portalAchievementBoundary.add(new AchievementBoundary(50, "Harry the Portaler"));
+        portalAchievementBoundary.add(new AchievementBoundary(100, "Clearly you are not confused by those portals."));
+        portalAchievementBoundary.add(new AchievementBoundary(250, "Dizzy?"));
+        portalAchievementBoundary.add(new AchievementBoundary(500, "Hey, the portals are crushing"));
+        portalAchievementBoundary.add(new AchievementBoundary(1000, "Call 911..."));
+        this.portalAchievement = new Achievement("portal passages", 0, portalAchievementBoundary);
+        
+        ArrayList<AchievementBoundary> diamondAchievementBoundary = new ArrayList<>();
+        diamondAchievementBoundary.add(new AchievementBoundary(1, "You got it"));
+        diamondAchievementBoundary.add(new AchievementBoundary(5, "Way to go"));
+        diamondAchievementBoundary.add(new AchievementBoundary(10, "Diamond catcher"));
+        diamondAchievementBoundary.add(new AchievementBoundary(50, "Diamond lover"));
+        diamondAchievementBoundary.add(new AchievementBoundary(100, "Diamond collector"));
+        diamondAchievementBoundary.add(new AchievementBoundary(250, "Diamond hunter"));
+        diamondAchievementBoundary.add(new AchievementBoundary(500, "How did you do that?"));
+        diamondAchievementBoundary.add(new AchievementBoundary(1000, "IQ level MAX"));
+        this.diamondAchievement = new Achievement("catch diamonds", 0, diamondAchievementBoundary);
 
         this.grid = new Grid();
         this.grid.setPosition(new Point(50, 100));
@@ -167,7 +208,8 @@ class SnakeEnvironment extends Environment {
 //                this.apples.add(new Point (((int)(Math.random() * this.grid.getColumns())),((int)(Math.random() * this.grid.getRows()))));
                 this.poisonBottles.add(getRandomGridLocation());
                 //accomplishment counter
-                this.appleAccomplishmentCounter ++;
+//                this.setAppleAccomplishmentCounter(this.getAppleAccomplishmentCounter() + 1);
+                this.appleAchievement.addToCount(1);
             }
         }
     }
@@ -197,6 +239,7 @@ class SnakeEnvironment extends Environment {
                 this.poisonBottles.get(j).x = -1000;
                 this.poisonBottles.get(j).y = -1000;
             }
+            diamondAchievement.addToCount(1);
         }
 
     }
@@ -206,10 +249,12 @@ class SnakeEnvironment extends Environment {
             AudioPlayer.play("/resources/rocket_sound.wav");
             this.snake.getHead().x = this.leavePortal.x;
             this.snake.getHead().y = this.leavePortal.y;
+            portalAchievement.addToCount(1);
         }else if (this.snake.getHead().equals(this.leavePortal)) {
             AudioPlayer.play("/resources/rocket_sound.wav");
             this.snake.getHead().x = this.enterPortal.x;
             this.snake.getHead().y = this.enterPortal.y;
+            portalAchievement.addToCount(1);
         }
 
     }
@@ -260,28 +305,29 @@ class SnakeEnvironment extends Environment {
                 portalCounter --;
             }
             
-            
-            if (instructionCounter == 0) {
-                this.instruction = "Collect apples and avoid poison bottles.";
-                instructionCounter = 201;
-            } else if (instructionCounter == 101) {
-                this.instruction = "The snake will speed up as the game progress.";
-                instructionCounter = 302;
-            } else if (instructionCounter == 202) {
-                this.instruction = "Catch the diamond to reduce the number of poison bottles.";
-                instructionCounter = 403;
-            } else if (instructionCounter == 303) {
-                this.instruction = "Good luck <3";
-                instructionCounter = 504;
-            } else if (instructionCounter == 404) {
-                this.instruction = "";
-                instructionCounter = -1;
-            } else if (instructionCounter == -1) {
-                this.instruction = "";
-            } else {
-                instructionCounter--;
-            }
+//            if (instructionCounter == 0) {
+//                this.instruction = "Collect apples and avoid poison bottles.";
+//                instructionCounter = 201;
+//            } else if (instructionCounter == 101) {
+//                this.instruction = "The snake will speed up as the game progress.";
+//                instructionCounter = 302;
+//            } else if (instructionCounter == 202) {
+//                this.instruction = "Catch the diamond to reduce the number of poison bottles.";
+//                instructionCounter = 403;
+//            } else if (instructionCounter == 303) {
+//                this.instruction = "Good luck <3";
+//                instructionCounter = 504;
+//            } else if (instructionCounter == 404) {
+//                this.instruction = "";
+//                instructionCounter = -1;
+//            } else if (instructionCounter == -1) {
+//                this.instruction = "";
+//            } else {
+//                instructionCounter--;
+//            }
 
+            this.setInstructionCounter(instructionCounter - 1);
+            
             if (snake.getHead().x < 0) {
                 snake.getHead().x = grid.getColumns() - 1;
             } else if (snake.getHead().y < 0) {
@@ -295,6 +341,32 @@ class SnakeEnvironment extends Environment {
 
     }
 
+    private void setInstructionCounter(int newInstructionCounter){
+//        if ((this.instructionCounter >= 500) && (newInstructionCounter < 500)) {
+        if (boundaryCheckDown(this.instructionCounter, newInstructionCounter, 600)) {
+            this.instruction = "Collect apples and avoid poison bottles";
+        } else if(boundaryCheckDown(this.instructionCounter, newInstructionCounter, 500)) {
+            this.instruction = "The snake will speed up as the game progress.";
+        }else if (boundaryCheckDown(this.instructionCounter, newInstructionCounter, 400)) {
+            this.instruction = "Catch the diamond to reduce the number of poison bottles.";
+        }else if (boundaryCheckDown(this.instructionCounter, newInstructionCounter, 300)){
+            this.instruction = "Hit space bar to pause. ";
+        }else if (boundaryCheckDown(this.instructionCounter, newInstructionCounter, 200)){
+            this.instruction = "Press 1 to open up accomplishment list";
+        }else if (boundaryCheckDown(this.instructionCounter, newInstructionCounter, 100)){
+            this.instruction = "Good luck!";
+        }else if (boundaryCheckDown(this.instructionCounter, newInstructionCounter, 0)){
+            this.instruction = "";
+        }
+        
+        this.instructionCounter = newInstructionCounter;
+    }
+    
+    private boolean boundaryCheckDown(int oldValue, int newValue, int boundaryValue){
+        return ((oldValue >= boundaryValue) && (newValue < boundaryValue));
+    }
+    
+    
     @Override
     public void keyPressedHandler(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE){
@@ -355,6 +427,13 @@ class SnakeEnvironment extends Environment {
             snake.setDirection(Direction.DOWN);
         } else if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
             gameState = GameState.ENDED;
+        } else if (e.getKeyCode() == KeyEvent.VK_1) {
+            if (gameState == GameState.RUNNING) {
+                gameState = GameState.ACCOMPLISHMENT;
+            } else if (gameState == GameState.ACCOMPLISHMENT) {
+                gameState = GameState.RUNNING;
+            }
+
         }
     }
 
@@ -415,6 +494,9 @@ class SnakeEnvironment extends Environment {
                 graphics.fillOval(this.grid.getCellPosition(this.leavePortal).x + (this.grid.getCellWidth() * 1/4), this.grid.getCellPosition(this.leavePortal).y + (this.grid.getCellHeight() * 1/4), this.grid.getCellWidth()/2, this.grid.getCellHeight()/2);
             }
             
+            
+//            graphics.drawString(this.portalAchievement.getType() + " " + this.portalAchievement.getCount() + " " + this.portalAchievement.getCurrentAchievementLabel(), 100, 100);
+//            graphics.drawString(this.diamondAchievement.getCurrentAchievementLabel(), 100,300 );
             
             
             if (this.life == 1) {
@@ -490,24 +572,10 @@ class SnakeEnvironment extends Environment {
         
         
         //accomplishment
-        graphics.setColor(Color.BLACK);
-        graphics.setFont(new Font("Segoe Print", Font.ITALIC, 30));
-        if (this.appleAccomplishmentCounter == 10) {
-            this.accomplishmentOne = "Accomplishment: Beginner~ (Eat 10 apples)";
-            graphics.drawString(this.accomplishmentOne, 400, 675);
-        } else if (this.appleAccomplishmentCounter == 35) {
-            this.accomplishmentOne = "Accomplishment: On the right track! (Eat 35 apples)";
-            graphics.drawString(this.accomplishmentOne, 350, 675);
-        } else if (this.appleAccomplishmentCounter == 100) {
-            this.accomplishmentOne = "Accomplishment: You are pro now. (Eat 100 apples)";
-            graphics.drawString(this.accomplishmentOne, 400, 675);
-        } else if (this.appleAccomplishmentCounter == 500) {
-            this.accomplishmentOne = "Accomplishment: A.p.p.l.e. c.r.u.s.h (Eat 500 apples)";
-            graphics.drawString(this.accomplishmentOne, 400, 675);
-        } else if (this.appleAccomplishmentCounter == 1000) {
-            this.accomplishmentOne = "Accomplishment: Satisfied (Eat 1000 apples)";
-            graphics.drawString(this.accomplishmentOne, 400, 675);
-        }
+//        graphics.setColor(Color.BLACK);
+//        graphics.setFont(new Font("Segoe Print", Font.ITALIC, 30));
+//        graphics.drawString(this.getAccomplishmentOne(), 400, 675);
+        
         
         
         
@@ -569,6 +637,27 @@ class SnakeEnvironment extends Environment {
             graphics.drawString("Click space bar to continue" , 400, 600);
             
         }
+        if (gameState == GameState.ACCOMPLISHMENT) {
+            graphics.setColor(new Color(200, 200, 250,200));
+            graphics.fillRect(0, 0, 2000, 1000);
+            
+            graphics.setColor(Color.BLACK);
+            graphics.setFont(new Font("Calibri", Font.ITALIC, 80));
+            graphics.drawString("Accomplishments", 400, 90);
+            
+            graphics.setFont(new Font("Calibri", Font.ITALIC, 20));           
+//            graphics.drawString(this.getAccomplishmentOne(), 50, 200);
+            graphics.drawString(this.appleAchievement.getType() + " " + this.appleAchievement.getCount() + " times ", 100,200 );
+            graphics.drawString(this.diamondAchievement.getType() + " " + this.diamondAchievement.getCount() + " times", 100,280 );
+            graphics.drawString(this.portalAchievement.getType() + " " + this.portalAchievement.getCount() + " times"  , 100,360 );
+            
+            graphics.setColor(Color.YELLOW);
+            graphics.setFont(new Font("Calibri", Font.ITALIC, 30));
+            graphics.drawString(this.appleAchievement.getCurrentAchievementLabel(),350 ,200 );
+            graphics.drawString(this.diamondAchievement.getCurrentAchievementLabel(),350 ,280 );
+            graphics.drawString(this.portalAchievement.getCurrentAchievementLabel(),350 ,360 );
+            
+        }
     }
 
     /**
@@ -623,5 +712,44 @@ class SnakeEnvironment extends Environment {
         
         this.life = life;
     }
+
+    /**
+     * @return the accomplishmentOne
+     */
+//    public String getAccomplishmentOne() {
+//        return accomplishmentOne;
+//    }
+//
+//    /**
+//     * @param accomplishmentOne the accomplishmentOne to set
+//     */
+//    public void setAccomplishmentOne(String accomplishmentOne) {
+//        this.accomplishmentOne = accomplishmentOne;
+//    }
+//
+//    /**
+//     * @return the appleAccomplishmentCounter
+//     */
+//    public int getAppleAccomplishmentCounter() {
+//        return appleAccomplishmentCounter;
+//    }
+//
+//    /**
+//     * @param appleAccomplishmentCounter the appleAccomplishmentCounter to set
+//     */
+//    public void setAppleAccomplishmentCounter(int appleAccomplishmentCounter) {
+//         if((this.appleAccomplishmentCounter < 10) && (appleAccomplishmentCounter >= 10)){
+//            accomplishmentOne = "Accomplishment: Beginner~ (Eat 10 apples)";  
+//        } else if ((this.appleAccomplishmentCounter < 35) && (appleAccomplishmentCounter >= 35)) {
+//            accomplishmentOne = "Accomplishment: On the right track! (Eat 35 apples)"; 
+//        } else if ((this.appleAccomplishmentCounter < 100) && (appleAccomplishmentCounter >= 100)) {
+//            accomplishmentOne = "Accomplishment: You are pro now. (Eat 100 apples)";
+//        } else if ((this.appleAccomplishmentCounter < 500) && (appleAccomplishmentCounter >= 500)) {
+//            accomplishmentOne = "Accomplishment: A.p.p.l.e. c.r.u.s.h (Eat 500 apples)"; 
+//        } else if ((this.appleAccomplishmentCounter < 1000) && (appleAccomplishmentCounter >= 1000)) {
+//            accomplishmentOne = "Accomplishment: Satisfied (Eat 1000 apples)";
+//        }
+//        this.appleAccomplishmentCounter = appleAccomplishmentCounter;
+//    }
 
 }
