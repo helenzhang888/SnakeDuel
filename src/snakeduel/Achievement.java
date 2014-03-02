@@ -90,6 +90,6 @@ public class Achievement {
     public void setAchievementBoundaries(ArrayList<AchievementBoundary> achievementBoundaries) {
         this.achievementBoundaries = achievementBoundaries;
     }
-    
+  
 //</editor-fold>   
 }

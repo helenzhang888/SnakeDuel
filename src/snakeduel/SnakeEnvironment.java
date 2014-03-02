@@ -68,6 +68,7 @@ class SnakeEnvironment extends Environment {
     
     private Image starting;
     private Image ended;
+    private Image accomplishment;
     
     private Image heart;
 
@@ -83,7 +84,19 @@ class SnakeEnvironment extends Environment {
     private Achievement appleAchievement;
     private Achievement directionAchievement;
     private Achievement timeAchievement;
-    //direction,playtime,poison bottles in a row
+    private Achievement poisonBottlesAchievement;
+    //playtime,poison bottles in a row
+    private String newAchievement = "";
+    private int newAchievementCounter = 100;
+    
+    
+    private int playTimeCounter;
+    private int playTimeSecond;
+    private int playTimeMinute;
+    
+    private int poinsonBottlesCounter;
+            
+    
     
     public SnakeEnvironment() {
 
@@ -99,21 +112,34 @@ class SnakeEnvironment extends Environment {
         
         this.starting = ResourceTools.loadImageFromResource("resources/starting.jpg");
         this.ended = ResourceTools.loadImageFromResource("resources/ended.jpg");
+        this.accomplishment = ResourceTools.loadImageFromResource("resources/accomplishment.jpg");
         
 //        this.logo = ResourceTools.loadImageFromResource("resources/logo.jpg");
         
         AudioPlayer.play("/resources/luv_letter.wav", AudioPlayer.LOOP_INFINITE);
         
         
+        ArrayList<AchievementBoundary> timeAchievementBoundary = new ArrayList<>();
+        timeAchievementBoundary.add(new AchievementBoundary(2, "Beginner"));
+        timeAchievementBoundary.add(new AchievementBoundary(5, "Newbie"));
+        timeAchievementBoundary.add(new AchievementBoundary(10, "Professional"));
+        timeAchievementBoundary.add(new AchievementBoundary(30, "Master"));
+        timeAchievementBoundary.add(new AchievementBoundary(60, "Obsessive gamer"));
+        timeAchievementBoundary.add(new AchievementBoundary(120, "No social life"));
+        timeAchievementBoundary.add(new AchievementBoundary(180, "You should stop playing"));
+        timeAchievementBoundary.add(new AchievementBoundary(300, "Seriously, go work out"));
+        this.timeAchievement = new Achievement("game time", 0, timeAchievementBoundary);
+        
+        
         ArrayList<AchievementBoundary> appleAchievementBoundary = new ArrayList<>();
-        appleAchievementBoundary.add(new AchievementBoundary(5, "Beginner"));
-        appleAchievementBoundary.add(new AchievementBoundary(10, "Newbie"));
-        appleAchievementBoundary.add(new AchievementBoundary(25, "Professional"));
-        appleAchievementBoundary.add(new AchievementBoundary(50, "Master"));
-        appleAchievementBoundary.add(new AchievementBoundary(100, "Obsessive gamer"));
-        appleAchievementBoundary.add(new AchievementBoundary(250, "No social life"));
-        appleAchievementBoundary.add(new AchievementBoundary(500, "You should stop playing"));
-        appleAchievementBoundary.add(new AchievementBoundary(1000, "Seriously, go work out"));
+        appleAchievementBoundary.add(new AchievementBoundary(5, "Delicious"));
+        appleAchievementBoundary.add(new AchievementBoundary(10, "More!"));
+        appleAchievementBoundary.add(new AchievementBoundary(25, "Good job"));
+        appleAchievementBoundary.add(new AchievementBoundary(50, "Loving it"));
+        appleAchievementBoundary.add(new AchievementBoundary(100, "Why the snake likes apple? I don't know."));
+        appleAchievementBoundary.add(new AchievementBoundary(250, "Full"));
+        appleAchievementBoundary.add(new AchievementBoundary(500, "Satisfied"));
+        appleAchievementBoundary.add(new AchievementBoundary(1000, "A.p.p.l.e. c.r.u.s.h"));
         this.appleAchievement = new Achievement("apples eaten", 0, appleAchievementBoundary);
         
         ArrayList<AchievementBoundary> portalAchievementBoundary = new ArrayList<>();
@@ -127,6 +153,13 @@ class SnakeEnvironment extends Environment {
         portalAchievementBoundary.add(new AchievementBoundary(1000, "Call 911..."));
         this.portalAchievement = new Achievement("portal passages", 0, portalAchievementBoundary);
         
+        ArrayList<AchievementBoundary> directionAchievementBoundary = new ArrayList<>();
+        directionAchievementBoundary.add(new AchievementBoundary(100, "Turn, turn, turn around~"));
+        directionAchievementBoundary.add(new AchievementBoundary(500, "There is an apple that you can never get?"));
+        directionAchievementBoundary.add(new AchievementBoundary(1000, "200APM!"));
+        directionAchievementBoundary.add(new AchievementBoundary(5000, "500APM~Congratulations"));
+        this.directionAchievement = new Achievement("change direction", 0, directionAchievementBoundary);
+        
         ArrayList<AchievementBoundary> diamondAchievementBoundary = new ArrayList<>();
         diamondAchievementBoundary.add(new AchievementBoundary(1, "You got it"));
         diamondAchievementBoundary.add(new AchievementBoundary(5, "Way to go"));
@@ -138,6 +171,13 @@ class SnakeEnvironment extends Environment {
         diamondAchievementBoundary.add(new AchievementBoundary(1000, "IQ level MAX"));
         this.diamondAchievement = new Achievement("catch diamonds", 0, diamondAchievementBoundary);
 
+        ArrayList<AchievementBoundary> poisonBottlesAchievementBoundary = new ArrayList<>();
+        poisonBottlesAchievementBoundary.add(new AchievementBoundary(2, "Bad luck"));
+        poisonBottlesAchievementBoundary.add(new AchievementBoundary(3, "Oops"));
+        poisonBottlesAchievementBoundary.add(new AchievementBoundary(5, "Are you looking?"));
+        poisonBottlesAchievementBoundary.add(new AchievementBoundary(10, "Suicidal"));
+        this.poisonBottlesAchievement = new Achievement("crush into bottles", 0, poisonBottlesAchievementBoundary);
+        
         this.grid = new Grid();
         this.grid.setPosition(new Point(50, 100));
         this.grid.setColor(new Color(150, 150, 250));
@@ -170,25 +210,40 @@ class SnakeEnvironment extends Environment {
         this.snake.getBody().add(new Point(4, 3)); 
     }
 
-    private Point getRandomGridLocation() {
-//        return new Point((int) (Math.random() * this.grid.getColumns()), (int) (Math.random() * this.grid.getRows()));
-        boolean collision = true;
-        Point myPoint = new Point();
-        do {
-               myPoint.setLocation(new Point((int) (Math.random() * this.grid.getColumns()), (int) (Math.random() * this.grid.getRows())));
-               collision = checkIntersect(myPoint, this.poisonBottles)  && checkIntersect(myPoint, this.apples);
-        } while (collision);
-        return myPoint;
-    }
+    public Point getRandomGridLocation() {
+        //generate a new random point in the grid
+        int x = (int) (Math.random() * grid.getColumns());
+        int y = (int) (Math.random() * grid.getRows());
 
-    private boolean checkIntersect(Point location, ArrayList<Point> locations) {
-        for (Point point : locations) {
-            if (location.equals(point)) {
-                return true;
+
+        Point randomPoint = new Point(x, y);
+        
+        
+        //check the point, if the position is occupied, move it 
+        //across the grid until you find an open point.
+        for (int row = 0; row < grid.getRows(); row++) {
+            for (int column = 0; column < grid.getColumns(); column++) {
+                randomPoint.setLocation((x + row) % grid.getColumns(), (y + column) % grid.getRows());
+                
+                if (!locationOccupied(randomPoint)) {
+                    return randomPoint;
+                }
             }
         }
-        return false;
+        return randomPoint;
     }
+    
+    private boolean locationOccupied(Point location){
+//        return apples.contains(location);
+
+
+//        if you have many ArrayLists with different objects, you will need to 
+//        check all of them with a statement as follows (assume we have "apples"
+//        and "lollipops" and "bombs":
+        
+        return (apples.contains(location) || poisonBottles.contains(location));
+    }
+
     
     
     private void checkAppleHeadIntersect() {
@@ -210,6 +265,7 @@ class SnakeEnvironment extends Environment {
                 //accomplishment counter
 //                this.setAppleAccomplishmentCounter(this.getAppleAccomplishmentCounter() + 1);
                 this.appleAchievement.addToCount(1);
+                this.poinsonBottlesCounter = 0;
             }
         }
     }
@@ -223,6 +279,12 @@ class SnakeEnvironment extends Environment {
                 this.setLife(this.getLife() - 1);
                 this.poisonBottles.get(i).x = getRandomGridLocation().x;
                 this.poisonBottles.get(i).y = getRandomGridLocation().y;
+                
+                this.poinsonBottlesCounter ++;
+                
+                if (this.poinsonBottlesCounter > this.poisonBottlesAchievement.getCount()) {
+                    this.poisonBottlesAchievement.setCount(this.poinsonBottlesCounter);
+                }
 
             }
         }
@@ -240,6 +302,7 @@ class SnakeEnvironment extends Environment {
                 this.poisonBottles.get(j).y = -1000;
             }
             diamondAchievement.addToCount(1);
+            this.poinsonBottlesCounter = 0;
         }
 
     }
@@ -339,6 +402,32 @@ class SnakeEnvironment extends Environment {
             }
         }
 
+        
+        if (this.playTimeCounter < 20) {
+            this.playTimeCounter ++;
+        }else{
+            this.playTimeSecond ++;
+            this.playTimeCounter = 0;
+//            System.out.println("played for" + this.playTimeSecond + "seconds");
+        }
+        
+        if (this.playTimeSecond >=60) {
+            this.playTimeSecond = 0; 
+//            System.out.println("+1 min");
+            this.playTimeMinute ++;
+            this.timeAchievement.setCount(this.playTimeMinute);
+        }
+        
+//        if (this.newAchievementCounter > 0) {
+//            this.newAchievement = this.appleAchievement.getCurrentAchievementLabel();
+//            newAchievementCounter --;
+//        } else{
+//            this.newAchievement = "";
+//            newAchievementCounter ++;
+//        }
+        
+        
+        
     }
 
     private void setInstructionCounter(int newInstructionCounter){
@@ -377,9 +466,10 @@ class SnakeEnvironment extends Environment {
                 gameState = GameState.RUNNING;
             } else if (gameState == GameState.LEVELUP) {
                 gameState = GameState.RUNNING;
-            } 
-            
-        } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            }     
+        } 
+        
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             if (gameState == GameState.STARTING) {
                 gameState = GameState.RUNNING;
             } else if (gameState == GameState.ENDED) {
@@ -405,29 +495,45 @@ class SnakeEnvironment extends Environment {
                 this.snake.getBody().add(new Point(5, 4));
                 this.snake.getBody().add(new Point(5, 3));
                 this.snake.getBody().add(new Point(4, 3)); 
-                gameState = GameState.RUNNING;
                 
+                this.objectCounterAppear = this.appear;
+                this.objectCounterDisappear = this.disappear;
                 
+                gameState = GameState.RUNNING;      
             }
-        } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+        } 
+        if(this.gameState == GameState.RUNNING){
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             snake.setDirection(Direction.LEFT);
+            this.directionAchievement.addToCount(1);
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             snake.setDirection(Direction.RIGHT);
+            this.directionAchievement.addToCount(1);
         } else if (e.getKeyCode() == KeyEvent.VK_UP) {
             snake.setDirection(Direction.UP);
+            this.directionAchievement.addToCount(1);
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             snake.setDirection(Direction.DOWN);
+            this.directionAchievement.addToCount(1);
         } else if (e.getKeyCode() == KeyEvent.VK_A) {
             snake.setDirection(Direction.LEFT);
+            this.directionAchievement.addToCount(1);
         } else if (e.getKeyCode() == KeyEvent.VK_D) {
             snake.setDirection(Direction.RIGHT);
+            this.directionAchievement.addToCount(1);
         } else if (e.getKeyCode() == KeyEvent.VK_W) {
             snake.setDirection(Direction.UP);
+            this.directionAchievement.addToCount(1);
         } else if (e.getKeyCode() == KeyEvent.VK_S) {
             snake.setDirection(Direction.DOWN);
-        } else if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
+            this.directionAchievement.addToCount(1);
+        } 
+        }
+        if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
             gameState = GameState.ENDED;
-        } else if (e.getKeyCode() == KeyEvent.VK_1) {
+        }
+        
+        if (e.getKeyCode() == KeyEvent.VK_1) {
             if (gameState == GameState.RUNNING) {
                 gameState = GameState.ACCOMPLISHMENT;
             } else if (gameState == GameState.ACCOMPLISHMENT) {
@@ -522,7 +628,7 @@ class SnakeEnvironment extends Environment {
             }
             
             graphics.setColor(Color.YELLOW);
-            graphics.setFont(new Font("Old English Text MT", Font.ITALIC, 40));
+            graphics.setFont(new Font("Old English Text MT", Font.ITALIC, 35));
             graphics.drawString("life", 1135, 75);
 
 
@@ -567,14 +673,14 @@ class SnakeEnvironment extends Environment {
 
         //instruction
         graphics.setFont(new Font("Segoe Print", Font.ITALIC, 20));
-        graphics.drawString(this.instruction, 480, 70);
+        graphics.drawString(this.instruction, 450, 70);
 
         
         
-        //accomplishment
-//        graphics.setColor(Color.BLACK);
-//        graphics.setFont(new Font("Segoe Print", Font.ITALIC, 30));
-//        graphics.drawString(this.getAccomplishmentOne(), 400, 675);
+//        accomplishment
+        graphics.setColor(Color.BLACK);
+        graphics.setFont(new Font("Segoe Print", Font.ITALIC, 30));
+        graphics.drawString(this.newAchievement, 400, 675);
         
         
         
@@ -583,7 +689,7 @@ class SnakeEnvironment extends Environment {
         if (gameState == GameState.STARTING) {
             graphics.setColor(new Color(200, 200, 250));
             graphics.fillRect(0, 0, 2000, 1000);
-            graphics.drawImage(starting, 20,20 , this);
+            graphics.drawImage(starting,0,0,1400,720, this);
             
             graphics.setColor(Color.BLACK);
             graphics.setFont(new Font("Snap ITC", Font.ITALIC, 150));
@@ -597,7 +703,7 @@ class SnakeEnvironment extends Environment {
         if (gameState == GameState.ENDED) {
             graphics.setColor(new Color(200, 200, 250,150));
             graphics.fillRect(0, 0, 2000, 1000);
-            graphics.drawImage(ended, 35,170 , this);
+            graphics.drawImage(ended, 0,0,1400,720 ,this);
             
             graphics.setColor(Color.red);
             graphics.setFont(new Font("Snap ITC", Font.ITALIC, 150));
@@ -630,10 +736,10 @@ class SnakeEnvironment extends Environment {
             graphics.fillRect(0, 0, 2000, 1000);
             
             graphics.setColor(Color.BLACK);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 200));
+            graphics.setFont(new Font("Snap ITC", Font.ITALIC, 130));
             graphics.drawString("Level Up!", 300, 300);
             
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 50));
+            graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 50));
             graphics.drawString("Click space bar to continue" , 400, 600);
             
         }
@@ -641,22 +747,29 @@ class SnakeEnvironment extends Environment {
             graphics.setColor(new Color(200, 200, 250,200));
             graphics.fillRect(0, 0, 2000, 1000);
             
-            graphics.setColor(Color.BLACK);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 80));
-            graphics.drawString("Accomplishments", 400, 90);
+            graphics.drawImage(accomplishment, 1000, 130,280,530 ,this);
             
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 20));           
+            graphics.setColor(Color.BLACK);
+            graphics.setFont(new Font("Snap ITC", Font.ITALIC, 80));
+            graphics.drawString("Accomplishments", 320, 90);
+            
+            graphics.setFont(new Font("Segoe Print", Font.ITALIC, 20));           
 //            graphics.drawString(this.getAccomplishmentOne(), 50, 200);
-            graphics.drawString(this.appleAchievement.getType() + " " + this.appleAchievement.getCount() + " times ", 100,200 );
-            graphics.drawString(this.diamondAchievement.getType() + " " + this.diamondAchievement.getCount() + " times", 100,280 );
-            graphics.drawString(this.portalAchievement.getType() + " " + this.portalAchievement.getCount() + " times"  , 100,360 );
+            graphics.drawString(this.timeAchievement.getType() + " " + this.timeAchievement.getCount() + " minutes ", 100,200 );
+            graphics.drawString(this.appleAchievement.getType() + " " + this.appleAchievement.getCount() + " times ", 100,280 );
+            graphics.drawString(this.diamondAchievement.getType() + " " + this.diamondAchievement.getCount() + " times", 100,360 );
+            graphics.drawString(this.portalAchievement.getType() + " " + this.portalAchievement.getCount() + " times"  , 100,440 );
+            graphics.drawString(this.directionAchievement.getType() + " " + this.directionAchievement.getCount() + " times" , 100,520 );
+            graphics.drawString(this.poisonBottlesAchievement.getType() + " " + this.poisonBottlesAchievement.getCount() + " times in a row" , 100,600 );
             
             graphics.setColor(Color.YELLOW);
-            graphics.setFont(new Font("Calibri", Font.ITALIC, 30));
-            graphics.drawString(this.appleAchievement.getCurrentAchievementLabel(),350 ,200 );
-            graphics.drawString(this.diamondAchievement.getCurrentAchievementLabel(),350 ,280 );
-            graphics.drawString(this.portalAchievement.getCurrentAchievementLabel(),350 ,360 );
-            
+            graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 30));
+            graphics.drawString(this.timeAchievement.getCurrentAchievementLabel(),500 ,200 );
+            graphics.drawString(this.appleAchievement.getCurrentAchievementLabel(),500 ,280 );
+            graphics.drawString(this.diamondAchievement.getCurrentAchievementLabel(),500 ,360 );
+            graphics.drawString(this.portalAchievement.getCurrentAchievementLabel(),500 ,440 );
+            graphics.drawString(this.directionAchievement.getCurrentAchievementLabel(),500 ,520 );
+            graphics.drawString(this.poisonBottlesAchievement.getCurrentAchievementLabel(),500 ,600 );
         }
     }
 
