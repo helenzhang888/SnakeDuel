@@ -707,7 +707,7 @@ class SnakeEnvironment extends Environment {
             
             graphics.setColor(Color.red);
             graphics.setFont(new Font("Snap ITC", Font.ITALIC, 150));
-            graphics.drawString("Game Over", 240, 150);
+            graphics.drawString("Game Over", 220, 170);
             
             graphics.setFont(new Font("Tempus Sans ITC", Font.ITALIC, 70));
             graphics.drawString("Final Score: " + this.getScore(),  470, 350);
